@@ -1,7 +1,7 @@
-﻿using BlogAppFunction.Data;
-using Microsoft.Azure.Functions.Extensions.DependencyInjection;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.Azure.Functions.Extensions.DependencyInjection;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 
 [assembly: FunctionsStartup(typeof(BlogAppFunction.Startup))]
 
@@ -11,11 +11,14 @@ namespace BlogAppFunction
     {
         public override void Configure(IFunctionsHostBuilder builder)
         {
-            string connectionStrig = System.Environment.GetEnvironmentVariable("PGConnectionString", System.EnvironmentVariableTarget.Process);
+            string EndpointUri = System.Environment.GetEnvironmentVariable("EndpointUri", System.EnvironmentVariableTarget.Process);
+            string PrimaryKey = System.Environment.GetEnvironmentVariable("PrimaryKey", System.EnvironmentVariableTarget.Process);
 
-            builder.Services.AddDbContext<DataContext>(opt =>
+            CosmosClient cosmosClient = new CosmosClient(EndpointUri, PrimaryKey, new CosmosClientOptions() { ApplicationName = "CosmosDBAndAzureFunction" });
+
+            builder.Services.AddSingleton<CosmosClient>((s) =>
             {
-                opt.UseNpgsql(connectionStrig);
+                return cosmosClient;
             });
         }
     }
